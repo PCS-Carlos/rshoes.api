@@ -1,0 +1,55 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlserver"
+  url      = env("DATABASE_URL")
+}
+
+model Cliente {
+  idCliente     Int         @id(map: "PK_Clientes") @default(autoincrement())
+  nombre        String      @db.NVarChar(120)
+  direccion     String      @db.NVarChar(250)
+  telefono      String      @db.NVarChar(10)
+  fechaRegistro DateTime    @db.Date
+  Servicios     Servicio[]
+
+  @@map("Clientes")
+}
+
+model Servicio {
+  idServicio        Int                @id(map: "PK_Servicios") @default(autoincrement())
+  idCliente         Int
+  fechaSolicitud    DateTime           @db.Date
+  fechaEntrega      DateTime           @db.Date
+  requisitosCliente String             @db.NVarChar(300)
+  comentarios       String?            @db.NVarChar(200)
+  cantidadPares     Int?
+  estatus           Int?
+  Clientes          Cliente           @relation(fields: [idCliente], references: [idCliente], onUpdate: NoAction, map: "FK_Servicios_Clientes")
+  ServiciosDetalle  ServicioDetalle[]
+
+  @@map("Servicios")
+}
+
+model ServicioDetalle {
+  idDetalle     Int       @id(map: "PK_ServiciosDetalle") @default(autoincrement())
+  idServicio    Int
+  tipoServicio  Int
+  cantidadPares Int
+  terminados    Int
+  Servicios     Servicio @relation(fields: [idServicio], references: [idServicio], onUpdate: NoAction, map: "FK_ServiciosDetalle_Servicios")
+
+  @@map("ServiciosDetalle")
+}
+
+model sysdiagrams {
+  name         String @db.NVarChar(128)
+  principal_id Int
+  diagram_id   Int    @id(map: "PK__sysdiagr__C2B05B61297DB58C") @default(autoincrement())
+  version      Int?
+  definition   Bytes?
+
+  @@unique([principal_id, name], map: "UK_principal_name")
+}
