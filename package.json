@@ -1,0 +1,34 @@
+{
+  "name": "rshoes.api",
+  "version": "1.0.0",
+  "description": "",
+  "main": "buildTS/index.js",
+  "scripts": {
+    "commit:info": "",
+    "rebuild": "rimraf dist && npm run build:prod",
+    "api": "node ./dist/index.js",
+    "build:test": "npm run rebuild && npm run api",
+    "api:prod": "export NODE_ENV=production && npm run rebuild && npm run api",
+    "compile": "tsc && node ./buildTS/index.js",
+    "clean": "rm -rf node_modules",
+    "nuke": "npm run clean && npm install",
+    "build": "rimraf dist && rimraf build && rimraf buildTS && webpack --mode=production --env production --progress --config webpack.config.js && zip-build",
+    "build:clean": "tsc -p .",
+    "build:prod": "tsc --build",
+    "dev": "concurrently -k \"tsc -p ./ -w\" \"nodemon ./buildTS/index.js\"",
+    "dev2": "nodemon -e ts  --exec \"npm run compile\"",
+    "format": "prettier --config ./.prettierrc --single-quote --write '**/*.{js,jsx,ts,tsx,json,css,scss}'",
+    "prepare": "husky install"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@prisma/client": "^6.4.1"
+  },
+  "devDependencies": {
+    "husky": "^8.0.3",
+    "lint-staged": "^13.2.1",
+    "prettier": "^3.5.2"
+  }
+}

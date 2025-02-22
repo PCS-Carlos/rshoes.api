@@ -1,0 +1,6 @@
+dist
+*.d.ts
+package.json
+webpack*
+*.snap
+.yarn
