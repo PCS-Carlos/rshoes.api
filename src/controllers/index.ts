@@ -2,7 +2,8 @@ import {Router} from 'express';
 import {Response as ExpressResponse} from 'express';
 import ClienteController from './cliente.controller';
 import ServicioController from './servicio.controller';
-import ServicioDetalleController from './servicioDetalle.controller';
+import PedidoController from './pedido.controller';
+import PedidoDetalleController from './pedidoDetalle.controller';
 
 export interface Controller {
   router: Router;
@@ -31,4 +32,4 @@ export const handleError = (res: ExpressResponse, error: any, controller: string
   return res.status(statusCode).json(response);
 };
 
-export {ClienteController, ServicioController, ServicioDetalleController};
+export {ClienteController, PedidoController, ServicioController, PedidoDetalleController};

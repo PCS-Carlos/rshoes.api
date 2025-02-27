@@ -8,40 +8,53 @@ datasource db {
 }
 
 model Cliente {
-  idCliente     Int         @id(map: "PK_Clientes") @default(autoincrement())
-  nombre        String      @db.NVarChar(120)
-  direccion     String      @db.NVarChar(250)
-  telefono      String      @db.NVarChar(10)
-  fechaRegistro DateTime    @db.Date
-  Servicios     Servicio[]
+  idCliente     Int       @id(map: "PK_Clientes") @default(autoincrement())
+  nombre        String    @db.NVarChar(120)
+  direccion     String    @db.NVarChar(250)
+  telefono      String    @db.NVarChar(10)
+  fechaRegistro DateTime  @db.Date
+  Pedido       Pedido[]
 
-  @@map("Clientes")
+  @@map("Cientes")
+}
+
+model PedidoDetalle {
+  idDetalle     Int       @id(map: "PK_ServiciosDetalle") @default(autoincrement())
+  idPedido      Int
+  idServicio    Int
+  cantidadPares Int
+  terminados    Int
+  Pedidos       Pedido   @relation(fields: [idPedido], references: [idPedido], onUpdate: NoAction, map: "FK_PedidoDetalle_Pedidos")
+  Servicio     Servicio @relation(fields: [idServicio], references: [idServicio], onUpdate: NoAction, map: "FK_PedidoDetalle_Servicios")
+}
+
+model Pedido {
+  idPedido          Int             @id(map: "PK_Pedidos") @default(autoincrement())
+  idCliente         Int
+  fechaSolicitud    DateTime        @db.Date
+  fechaEntrega      DateTime        @db.Date
+  requisitosCliente String          @db.NVarChar(300)
+  comentarios       String?         @db.NVarChar(200)
+  cantidadPares     Int
+  total             Int
+  abono             Int
+  estatus           Int
+  recoleccion       String          @db.NVarChar(9)
+  entrega           String          @db.NVarChar(9)
+  PedidoDetalle     PedidoDetalle[]
+  Cliente          Cliente        @relation(fields: [idCliente], references: [idCliente], onUpdate: NoAction, map: "FK_Pedidos_Clientes")
+
+  @@map("Pedidos")
 }
 
 model Servicio {
-  idServicio        Int                @id(map: "PK_Servicios") @default(autoincrement())
-  idCliente         Int
-  fechaSolicitud    DateTime           @db.Date
-  fechaEntrega      DateTime           @db.Date
-  requisitosCliente String             @db.NVarChar(300)
-  comentarios       String?            @db.NVarChar(200)
-  cantidadPares     Int?
-  estatus           Int?
-  Clientes          Cliente           @relation(fields: [idCliente], references: [idCliente], onUpdate: NoAction, map: "FK_Servicios_Clientes")
-  ServiciosDetalle  ServicioDetalle[]
+  idServicio    Int             @id(map: "PK_Servicios") @default(autoincrement())
+  nombre        String          @db.NVarChar(30)
+  costo         Int
+  tipo          String          @db.NVarChar(15)
+  PedidoDetalle PedidoDetalle[]
 
   @@map("Servicios")
-}
-
-model ServicioDetalle {
-  idDetalle     Int       @id(map: "PK_ServiciosDetalle") @default(autoincrement())
-  idServicio    Int
-  tipoServicio  Int
-  cantidadPares Int
-  terminados    Int
-  Servicios     Servicio @relation(fields: [idServicio], references: [idServicio], onUpdate: NoAction, map: "FK_ServiciosDetalle_Servicios")
-
-  @@map("ServiciosDetalle")
 }
 
 model sysdiagrams {
