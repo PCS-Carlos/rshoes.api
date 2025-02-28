@@ -1,6 +1,6 @@
 import createServer from './api';
 import config from './config/global';
-import {ClienteController} from './controllers';
+import {ClienteController, ServicioController} from './controllers';
 
-const server = createServer([ClienteController()], config);
+const server = createServer([ClienteController(), ServicioController()], config);
 server.run();

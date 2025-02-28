@@ -81,9 +81,9 @@ const ServicioController = () => {
     }
   };
 
-  router.get('/servicios', validateJWT, getServicios);
-  router.get('/servicio/:idServicio', validateJWT, getServicioById);
-  router.post('/servicio', validateJWT, addServicio);
+  router.get('/servicios', getServicios);
+  router.get('/servicio/:idServicio', getServicioById);
+  router.post('/servicio', addServicio);
   router.put('/servicio/:idServicio', validateJWT, updateServicio);
   router.delete('/servicio/:idServicio', validateJWT, deleteServicio);
 
