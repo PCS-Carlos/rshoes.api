@@ -7,25 +7,14 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Cliente {
-  idCliente     Int       @id(map: "PK_Clientes") @default(autoincrement())
-  nombre        String    @db.NVarChar(120)
-  direccion     String    @db.NVarChar(250)
-  telefono      String    @db.NVarChar(10)
-  fechaRegistro DateTime  @db.Date
-  Pedido       Pedido[]
-
-  @@map("Cientes")
-}
-
 model PedidoDetalle {
-  idDetalle     Int       @id(map: "PK_ServiciosDetalle") @default(autoincrement())
+  idDetalle     Int      @id(map: "PK_ServiciosDetalle") @default(autoincrement())
   idPedido      Int
   idServicio    Int
   cantidadPares Int
   terminados    Int
   Pedidos       Pedido   @relation(fields: [idPedido], references: [idPedido], onUpdate: NoAction, map: "FK_PedidoDetalle_Pedidos")
-  Servicio     Servicio @relation(fields: [idServicio], references: [idServicio], onUpdate: NoAction, map: "FK_PedidoDetalle_Servicios")
+  Servicio      Servicio @relation(fields: [idServicio], references: [idServicio], onUpdate: NoAction, map: "FK_PedidoDetalle_Servicios")
 }
 
 model Pedido {
@@ -42,7 +31,7 @@ model Pedido {
   recoleccion       String          @db.NVarChar(9)
   entrega           String          @db.NVarChar(9)
   PedidoDetalle     PedidoDetalle[]
-  Cliente          Cliente        @relation(fields: [idCliente], references: [idCliente], onUpdate: NoAction, map: "FK_Pedidos_Clientes")
+  Cliente           Cliente         @relation(fields: [idCliente], references: [idCliente], onUpdate: NoAction, map: "FK_Pedidos_Clientes")
 
   @@map("Pedidos")
 }
@@ -65,4 +54,25 @@ model sysdiagrams {
   definition   Bytes?
 
   @@unique([principal_id, name], map: "UK_principal_name")
+}
+
+model Cliente {
+  idCliente     Int      @id(map: "PK_Clientes") @default(autoincrement())
+  nombre        String   @db.NVarChar(120)
+  direccion     String   @db.NVarChar(250)
+  telefono      String   @db.NVarChar(10)
+  fechaRegistro DateTime @db.Date
+  Pedido        Pedido[]
+
+  @@map("Clientes")
+}
+
+model Usuario {
+  idUsuario    Int      @id(map: "PK_Usuarios") @default(autoincrement())
+  nombre       String   @db.NVarChar(50)
+  contrasena   String   @db.NVarChar(50)
+  token        String   @db.NVarChar(Max)
+  ultimoAcceso DateTime @db.Date
+
+  @@map("Usuarios")
 }
