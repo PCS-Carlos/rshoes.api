@@ -38,9 +38,9 @@ model Pedido {
 
 model Servicio {
   idServicio    Int             @id(map: "PK_Servicios") @default(autoincrement())
-  nombre        String          @db.NVarChar(30)
-  costo         Int
-  tipo          String          @db.NVarChar(15)
+  nombre        String?         @db.NVarChar(30)
+  costo         Int?
+  tipo          String?         @db.NVarChar(15)
   PedidoDetalle PedidoDetalle[]
 
   @@map("Servicios")
@@ -68,11 +68,11 @@ model Cliente {
 }
 
 model Usuario {
-  idUsuario    Int      @id(map: "PK_Usuarios") @default(autoincrement())
-  nombre       String   @db.NVarChar(50)
-  contrasena   String   @db.NVarChar(50)
-  token        String   @db.NVarChar(Max)
-  ultimoAcceso DateTime @db.Date
+  idUsuario    Int       @id(map: "PK_Usuarios") @default(autoincrement())
+  nombre       String?   @db.NVarChar(20)
+  contrasena   String?   @db.NVarChar(Max)
+  token        String?   @db.NVarChar(Max)
+  ultimoAcceso DateTime? @db.Date
 
   @@map("Usuarios")
 }
