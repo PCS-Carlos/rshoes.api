@@ -8,6 +8,8 @@ import {
   UsuarioController,
 } from './controllers';
 
+console.log('Hola mundo');
+
 const server = createServer(
   [ClienteController(), PedidoController(), PedidoDetalleController(), ServicioController(), UsuarioController()],
   config,
