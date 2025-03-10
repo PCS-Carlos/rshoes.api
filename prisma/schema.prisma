@@ -7,40 +7,31 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model PedidoDetalle {
-  idDetalle     Int      @id(map: "PK_ServiciosDetalle") @default(autoincrement())
-  idPedido      Int
-  idServicio    Int
-  cantidadPares Int
-  Pedido       Pedido   @relation(fields: [idPedido], references: [idPedido], onUpdate: NoAction, map: "FK_PedidoDetalle_Pedidos")
-  Servicio      Servicio @relation(fields: [idServicio], references: [idServicio], onUpdate: NoAction, map: "FK_PedidoDetalle_Servicios")
-}
-
 model Pedido {
-  idPedido          Int             @id(map: "PK_Pedidos") @default(autoincrement())
+  idPedido          Int              @id(map: "PK_Pedidos") @default(autoincrement())
   idCliente         Int?
-  fechaSolicitud    DateTime?       @db.Date
-  fechaEntrega      DateTime?       @db.Date
-  requisitosCliente String?         @db.NVarChar(300)
-  comentarios       String?         @db.NVarChar(200)
+  fechaSolicitud    DateTime?        @db.Date
+  fechaEntrega      DateTime?        @db.Date
+  requisitosCliente String?          @db.NVarChar(300)
+  comentarios       String?          @db.NVarChar(200)
   cantidadPares     Int?
   total             Int?
   abono             Int?
   estatus           Int?
-  recoleccion       String?         @db.NVarChar(9)
-  entrega           String?         @db.NVarChar(9)
-  PedidoDetalle     PedidoDetalle[]
-  Cliente           Cliente?        @relation(fields: [idCliente], references: [idCliente], onDelete: NoAction, onUpdate: NoAction, map: "FK_Pedidos_Clientes")
+  recoleccion       String?          @db.NVarChar(9)
+  entrega           String?          @db.NVarChar(9)
+  PedidoDetalle    PedidoDetalle[]
+  Cliente           Cliente?         @relation(fields: [idCliente], references: [idCliente], onDelete: NoAction, onUpdate: NoAction, map: "FK_Pedidos_Clientes")
 
   @@map("Pedidos")
 }
 
 model Servicio {
-  idServicio    Int             @id(map: "PK_Servicios") @default(autoincrement())
-  nombre        String?         @db.NVarChar(30)
-  costo         Int?
-  tipo          String?         @db.NVarChar(15)
-  color         String?         @db.NVarChar(7)
+  idServicio     Int              @id(map: "PK_Servicios") @default(autoincrement())
+  nombre         String?          @db.NVarChar(30)
+  costo          Int?
+  tipo           String?          @db.NVarChar(15)
+  color          String?          @db.NVarChar(7)
   PedidoDetalle PedidoDetalle[]
 
   @@map("Servicios")
@@ -75,4 +66,15 @@ model Usuario {
   ultimoAcceso DateTime? @db.Date
 
   @@map("Usuarios")
+}
+
+model PedidoDetalle {
+  idDetalle     Int      @id(map: "PK_ServiciosDetalle") @default(autoincrement())
+  idPedido      Int
+  idServicio    Int
+  cantidadPares Int
+  Pedidos       Pedido   @relation(fields: [idPedido], references: [idPedido], onUpdate: NoAction, map: "FK_PedidoDetalle_Pedidos")
+  Servicios     Servicio @relation(fields: [idServicio], references: [idServicio], onUpdate: NoAction, map: "FK_PedidoDetalle_Servicios")
+
+  @@map("PedidoDetalles")
 }
