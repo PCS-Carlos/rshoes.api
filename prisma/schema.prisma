@@ -20,8 +20,8 @@ model Pedido {
   estatus           Int?
   recoleccion       String?          @db.NVarChar(9)
   entrega           String?          @db.NVarChar(9)
-  PedidoDetalle    PedidoDetalle[]
-  Cliente           Cliente?         @relation(fields: [idCliente], references: [idCliente], onDelete: NoAction, onUpdate: NoAction, map: "FK_Pedidos_Clientes")
+  pedidosDetalle    PedidoDetalle[]
+  cliente           Cliente?         @relation(fields: [idCliente], references: [idCliente], onDelete: NoAction, onUpdate: NoAction, map: "FK_Pedidos_Clientes")
 
   @@map("Pedidos")
 }
@@ -32,7 +32,7 @@ model Servicio {
   costo          Int?
   tipo           String?          @db.NVarChar(15)
   color          String?          @db.NVarChar(7)
-  PedidoDetalle PedidoDetalle[]
+  pedidosDetalle PedidoDetalle[]
 
   @@map("Servicios")
 }
@@ -53,7 +53,7 @@ model Cliente {
   direccion     String   @db.NVarChar(250)
   telefono      String   @db.NVarChar(10)
   fechaRegistro DateTime @db.Date
-  Pedido        Pedido[]
+  pedidos        Pedido[]
 
   @@map("Clientes")
 }
@@ -73,8 +73,8 @@ model PedidoDetalle {
   idPedido      Int
   idServicio    Int
   cantidadPares Int
-  Pedidos       Pedido   @relation(fields: [idPedido], references: [idPedido], onUpdate: NoAction, map: "FK_PedidoDetalle_Pedidos")
-  Servicios     Servicio @relation(fields: [idServicio], references: [idServicio], onUpdate: NoAction, map: "FK_PedidoDetalle_Servicios")
+  pedido       Pedido   @relation(fields: [idPedido], references: [idPedido], onUpdate: NoAction, map: "FK_PedidoDetalle_Pedidos")
+  servicio     Servicio @relation(fields: [idServicio], references: [idServicio], onUpdate: NoAction, map: "FK_PedidoDetalle_Servicios")
 
   @@map("PedidoDetalles")
 }

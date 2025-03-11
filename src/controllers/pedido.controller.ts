@@ -10,7 +10,16 @@ const PedidoController = () => {
   const getPedidos = async (_: Request, res: ExpressResponse) => {
     console.log('GET /pedidos');
     try {
-      const pedidos = await prisma.pedido.findMany();
+      const pedidos = await prisma.pedido.findMany({
+        include: {
+          pedidosDetalle: {
+            include: {
+              servicio: true,
+            },
+          },
+          cliente: true,
+        },
+      });
       res.json(pedidos);
     } catch (error) {
       handleError(res, error, 'pedido');
@@ -81,10 +90,10 @@ const PedidoController = () => {
     }
   };
 
-  router.get('/pedidos', validateJWT, getPedidos);
-  router.get('/pedido/:idPedido', validateJWT, getPedidoById);
-  router.post('/pedido', validateJWT, addPedido);
-  router.put('/pedido/:idPedido', validateJWT, updatePedido);
+  router.get('/pedidos', getPedidos);
+  router.get('/pedido/:idPedido', getPedidoById);
+  router.post('/pedido', addPedido);
+  router.put('/pedido/:idPedido', updatePedido);
   router.delete('/pedido/:idPedido', validateJWT, deletePedido);
 
   return {
