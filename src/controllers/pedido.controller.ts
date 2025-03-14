@@ -44,12 +44,19 @@ const PedidoController = () => {
   const addPedido = async (req: Request, res: ExpressResponse) => {
     console.log('POST /pedido');
     try {
-      const body: Pedido = req.body;
+      const {pedido, detallesPedido} = req.body;
       const pedidoCreado = await prisma.pedido.create({
         data: {
-          ...body,
+          ...pedido,
+          pedidosDetalle: {
+            create: detallesPedido,
+          },
+        },
+        include: {
+          pedidosDetalle: true,
         },
       });
+
       res.json(pedidoCreado);
     } catch (error) {
       handleError(res, error, 'Pedido');
