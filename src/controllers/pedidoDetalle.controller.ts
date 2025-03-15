@@ -81,11 +81,11 @@ const PedidoDetalleController = () => {
     }
   };
 
-  router.get('/pedidoDetalle', validateJWT, getPedidosDetalle);
-  router.get('/pedidoDetalle/:idPedido', validateJWT, getPedidoDetalleById);
-  router.post('/pedidoDetalle', validateJWT, addPedidoDetalle);
-  router.put('/pedidoDetalle/:idDetalle', validateJWT, updatePedidoDetalle);
-  router.delete('/pedidoDetalle/:idDetalle', validateJWT, deletePedidoDetalle);
+  router.get('/pedidoDetalle', getPedidosDetalle);
+  router.get('/pedidoDetalle/:idPedido', getPedidoDetalleById);
+  router.post('/pedidoDetalle', addPedidoDetalle);
+  router.put('/pedidoDetalle/:idDetalle', updatePedidoDetalle);
+  router.delete('/pedidoDetalle/:idDetalle', deletePedidoDetalle);
 
   return {
     router,
