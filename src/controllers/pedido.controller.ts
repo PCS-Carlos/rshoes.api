@@ -34,6 +34,14 @@ const PedidoController = () => {
         where: {
           idPedido,
         },
+        include: {
+          pedidosDetalle: {
+            include: {
+              servicio: true,
+            },
+          },
+          cliente: true,
+        },
       });
       res.json(pedido);
     } catch (error) {
