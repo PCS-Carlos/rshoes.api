@@ -24,7 +24,7 @@ const createServer = (controllers: Controller[], config: Config) => {
 
   const initializeControllers = (controllers: Controller[]) => {
     controllers.forEach((controller) => {
-      app.use(`/api/admin`, controller.router);
+      app.use(`/api/rshoes`, controller.router);
     });
   };
 
