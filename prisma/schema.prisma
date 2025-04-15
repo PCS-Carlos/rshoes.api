@@ -9,6 +9,7 @@ datasource db {
 
 model Pedido {
   idPedido          Int             @id(map: "PK_Pedidos") @default(autoincrement())
+  folio             String?         @db.NVarChar(12)
   idCliente         Int?
   fechaSolicitud    DateTime?       @db.Date
   fechaEntrega      DateTime?       @db.Date
