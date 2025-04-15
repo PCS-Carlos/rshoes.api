@@ -49,6 +49,29 @@ const PedidoController = () => {
     }
   };
 
+  const getPedidoByFolio = async (req: Request, res: ExpressResponse) => {
+    console.log('GET /pedidoByFolio/:folio');
+    try {
+      const folio = req.params.folio ?? '';
+      const pedido = await prisma.pedido.findFirst({
+        where: {
+          folio: folio,
+        },
+        include: {
+          pedidosDetalle: {
+            include: {
+              servicio: true,
+            },
+          },
+          cliente: true,
+        },
+      });
+      res.json(pedido);
+    } catch (error) {
+      handleError(res, error, 'Pedido');
+    }
+  };
+
   const addPedido = async (req: Request, res: ExpressResponse) => {
     console.log('POST /pedido');
     try {
@@ -107,6 +130,7 @@ const PedidoController = () => {
 
   router.get('/pedidos', getPedidos);
   router.get('/pedido/:idPedido', getPedidoById);
+  router.get('/pedidoByFolio/:folio', getPedidoByFolio);
   router.post('/pedido', addPedido);
   router.put('/pedido/:idPedido', updatePedido);
   router.delete('/pedido/:idPedido', validateJWT, deletePedido);
