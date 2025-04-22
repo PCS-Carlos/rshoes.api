@@ -49,12 +49,13 @@ model sysdiagrams {
 }
 
 model Cliente {
-  idCliente     Int      @id(map: "PK_Clientes") @default(autoincrement())
-  nombre        String   @db.NVarChar(120)
-  direccion     String   @db.NVarChar(250)
-  telefono      String   @db.NVarChar(10)
-  fechaRegistro DateTime @db.Date
-  pedidos       Pedido[]
+  idCliente       Int       @id(map: "PK_Clientes") @default(autoincrement())
+  nombre          String?   @db.NVarChar(120)
+  direccion       String?   @db.NVarChar(250)
+  telefono        String?   @db.NVarChar(10)
+  fechaRegistro   DateTime? @db.Date
+  fechaNacimiento DateTime? @db.Date
+  pedidos         Pedido[]
 
   @@map("Clientes")
 }
