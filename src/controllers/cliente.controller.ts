@@ -1,4 +1,4 @@
-import {PrismaClient, Cliente} from '@prisma/client';
+import {PrismaClient, Cliente, Pedido} from '@prisma/client';
 import {Router, Request, Response as ExpressResponse} from 'express';
 import {handleError} from '.';
 import {validateJWT} from '../middlewares/auth.middleware';
@@ -11,6 +11,32 @@ const ClienteController = () => {
     console.log('GET /clientes');
     try {
       const clientes = await prisma.cliente.findMany();
+      res.json(clientes);
+    } catch (error) {
+      handleError(res, error, 'Cliente');
+    }
+  };
+
+  const getClientesWithPedidos = async (_: Request, res: ExpressResponse) => {
+    console.log('GET /clientesPedidos');
+    try {
+      const fecha = new Date();
+      // Get the last 3 months
+      fecha.setMonth(fecha.getMonth() - 3);
+      const clientes = await prisma.cliente.findMany({
+        include: {
+          pedidos: {
+            include: {
+              pedidosDetalle: true,
+            },
+            where: {
+              fechaSolicitud: {
+                gt: fecha,
+              },
+            },
+          },
+        },
+      });
       res.json(clientes);
     } catch (error) {
       handleError(res, error, 'Cliente');
@@ -82,6 +108,7 @@ const ClienteController = () => {
   };
 
   router.get('/clientes', validateJWT, getClientes);
+  router.get('/clientesWithPedidos', validateJWT, getClientesWithPedidos);
   router.get('/cliente/:idCliente', validateJWT, getClienteById);
   router.post('/cliente', validateJWT, addCliente);
   router.put('/cliente/:idCliente', validateJWT, updateCliente);
