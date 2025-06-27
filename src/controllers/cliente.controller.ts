@@ -1,4 +1,4 @@
-import {PrismaClient, Cliente, Pedido} from '@prisma/client';
+import {PrismaClient, Cliente} from '@prisma/client';
 import {Router, Request, Response as ExpressResponse} from 'express';
 import {handleError} from '.';
 import {validateJWT} from '../middlewares/auth.middleware';
