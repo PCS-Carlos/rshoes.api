@@ -21,20 +21,30 @@ model Pedido {
   estatus           Int?
   recoleccion       String?         @db.NVarChar(9)
   entrega           String?         @db.NVarChar(9)
+  idUsuario         Int?
+  recolectadoPor    Int?
+  entregadoPor      Int?
+  updatedAt         DateTime?       @default(now(), map: "DF__Pedidos__updated__6166761E") @db.DateTime
+  activo            Boolean         @default(true, map: "DF__Pedidos__activo__625A9A57")
   pedidosDetalle    PedidoDetalle[]
   cliente           Cliente?        @relation(fields: [idCliente], references: [idCliente], onDelete: NoAction, onUpdate: NoAction, map: "FK_Pedidos_Clientes")
 
+  @@index([activo], map: "IX_Pedidos_activo")
   @@map("Pedidos")
 }
 
 model Servicio {
-  idServicio     Int             @id(map: "PK_Servicios") @default(autoincrement())
-  nombre         String?         @db.NVarChar(30)
-  costo          Int?
-  tipo           String?         @db.NVarChar(15)
-  color          String?         @db.NVarChar(7)
-  pedidosDetalle PedidoDetalle[]
+  idServicio          Int             @id(map: "PK_Servicios") @default(autoincrement())
+  nombre              String?         @db.NVarChar(30)
+  costo               Int?
+  tipo                String?         @db.NVarChar(15)
+  color               String?         @db.NVarChar(7)
+  activo              Boolean         @default(true, map: "DF__Servicios__activ__5F7E2DAC")
+  duracionEstimadaMin Int?
+  orden               Int?
+  pedidosDetalle      PedidoDetalle[]
 
+  @@index([activo], map: "IX_Servicios_activo")
   @@map("Servicios")
 }
 
@@ -55,17 +65,26 @@ model Cliente {
   telefono        String?   @db.NVarChar(10)
   fechaRegistro   DateTime? @db.Date
   fechaNacimiento DateTime? @db.Date
+  email           String?   @db.VarChar(120)
+  notas           String?   @db.VarChar(Max)
+  ultimaVisita    DateTime? @db.DateTime
+  activo          Boolean   @default(true, map: "DF__Clientes__activo__634EBE90")
   pedidos         Pedido[]
 
+  @@index([activo], map: "IX_Clientes_activo")
   @@map("Clientes")
 }
 
 model Usuario {
-  idUsuario    Int       @id(map: "PK_Usuarios") @default(autoincrement())
-  nombre       String?   @db.NVarChar(20)
-  contrasena   String?   @db.NVarChar(Max)
-  token        String?   @db.NVarChar(Max)
-  ultimoAcceso DateTime? @db.Date
+  idUsuario     Int       @id(map: "PK_Usuarios") @default(autoincrement())
+  nombre        String?   @db.NVarChar(20)
+  contrasena    String?   @db.NVarChar(Max)
+  token         String?   @db.NVarChar(Max)
+  ultimoAcceso  DateTime? @db.Date
+  email         String?   @db.VarChar(120)
+  rol           String    @default("Dueño", map: "DF__Usuarios__rol__5CA1C101") @db.VarChar(20)
+  activo        Boolean   @default(true, map: "DF__Usuarios__activo__5D95E53A")
+  fechaCreacion DateTime? @default(now(), map: "DF__Usuarios__fechaC__5E8A0973") @db.DateTime
 
   @@map("Usuarios")
 }
