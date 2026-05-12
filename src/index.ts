@@ -1,6 +1,7 @@
 import createServer from './api';
 import config from './config/global';
 import {
+  AnalyticsController,
   ClienteController,
   PedidoController,
   PedidoDetalleController,
@@ -9,7 +10,14 @@ import {
 } from './controllers';
 
 const server = createServer(
-  [ClienteController(), PedidoController(), PedidoDetalleController(), ServicioController(), UsuarioController()],
+  [
+    ClienteController(),
+    PedidoController(),
+    PedidoDetalleController(),
+    ServicioController(),
+    UsuarioController(),
+    AnalyticsController(),
+  ],
   config,
 );
 server.run();

@@ -153,3 +153,6 @@ buildTS
 #.pnp.*
 
 .idea/
+
+# Environment variables with secrets
+env/

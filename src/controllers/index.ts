@@ -5,6 +5,7 @@ import ServicioController from './servicio.controller';
 import PedidoController from './pedido.controller';
 import PedidoDetalleController from './pedidoDetalle.controller';
 import UsuarioController from './usuario.controller';
+import AnalyticsController from './analytics.controller';
 
 export interface Controller {
   router: Router;
@@ -33,4 +34,11 @@ export const handleError = (res: ExpressResponse, error: any, controller: string
   return res.status(statusCode).json(response);
 };
 
-export {ClienteController, PedidoController, ServicioController, PedidoDetalleController, UsuarioController};
+export {
+  ClienteController,
+  PedidoController,
+  ServicioController,
+  PedidoDetalleController,
+  UsuarioController,
+  AnalyticsController,
+};
