@@ -22,6 +22,15 @@ const PERIOD_DAYS: Record<AnalyticsPeriod, number> = {
   '90d': 90,
 };
 
+const EMPTY_EVENTS: Record<string, number> = {
+  customer_service_viewed: 0,
+  customer_result_viewed: 0,
+  customer_order_reviewed: 0,
+  customer_order_lookup_failed: 0,
+  customer_sent_to_whatsapp: 0,
+  customer_social_link_clicked: 0,
+};
+
 const toNumber = (value: unknown): number => {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : 0;
@@ -51,6 +60,9 @@ const getApiConfig = () => {
   };
 };
 
+const isPosthogConfigured = () =>
+  Boolean(process.env.POSTHOG_HOST && process.env.POSTHOG_PROJECT_ID && process.env.POSTHOG_PERSONAL_API_KEY);
+
 const requestJson = (
   url: string,
   method: 'POST' | 'GET',
@@ -69,6 +81,7 @@ const requestJson = (
         path: `${parsedUrl.pathname}${parsedUrl.search}`,
         method,
         headers,
+        timeout: 25000,
       },
       (response) => {
         const chunks: Buffer[] = [];
@@ -101,6 +114,9 @@ const requestJson = (
     );
 
     request.on('error', (error) => reject(error));
+    request.on('timeout', () => {
+      request.destroy(new Error('Timeout de conexión hacia PostHog.'));
+    });
 
     if (body) {
       request.write(body);
@@ -196,6 +212,39 @@ const buildDailyLabels = (period: AnalyticsPeriod) => {
 
   return ['Mes 1', 'Mes 2', 'Mes 3'];
 };
+
+const buildEmptyDashboardData = (period: AnalyticsPeriod, env: string) => ({
+  meta: {
+    period,
+    env,
+  },
+  summary: {
+    visitors: 0,
+    views: 0,
+    sessions: 0,
+    whatsapp: 0,
+    orderLookupFailed: 0,
+    socialClicks: 0,
+  },
+  daily: buildDailyLabels(period).map((day) => ({day, visitors: 0, views: 0})),
+  countries: [],
+  retention: {
+    week0: 0,
+    week1: 0,
+  },
+  technology: [
+    {label: 'Desktop', value: 0, color: '#1677ff'},
+    {label: 'Mobile', value: 0, color: '#52c41a'},
+    {label: 'Tablet', value: 0, color: '#faad14'},
+  ],
+  events: {...EMPTY_EVENTS},
+  servicesByType: {},
+  resultsByType: {},
+  ordersByStatus: {},
+  lookupFailuresByStatus: {},
+  whatsappBySource: {},
+  socialByPlatform: {},
+});
 
 const queryDailyMetrics = async (period: AnalyticsPeriod, whereClause: string) => {
   if (period === '7d') {
@@ -336,28 +385,35 @@ const queryBreakdown = async (
 };
 
 export const getPosthogDashboardData = async (period: AnalyticsPeriod, env = 'prod') => {
-  const baseWhereClause = getBaseDateFilter(period);
-  const trackedWhereClause = getTrackedEventsFilter(period, env);
+  const safeEnv = sanitizeEnv(env) || 'prod';
 
-  const summaryRows = await runHogQL(
-    `
+  if (!isPosthogConfigured()) {
+    return buildEmptyDashboardData(period, safeEnv);
+  }
+
+  try {
+    const baseWhereClause = getBaseDateFilter(period);
+    const trackedWhereClause = getTrackedEventsFilter(period, safeEnv);
+
+    const summaryRows = await runHogQL(
+      `
     SELECT
       uniqExact(distinct_id) AS visitors,
       count() AS views,
       uniqExactIf(toString(properties.$session_id), toString(properties.$session_id) != '') AS sessions,
-      countIf(event = 'customer_sent_to_whatsapp' AND lower(toString(properties.env)) = '${escapedSqlString(sanitizeEnv(env) || 'prod')}') AS whatsapp,
-      countIf(event = 'customer_order_lookup_failed' AND lower(toString(properties.env)) = '${escapedSqlString(sanitizeEnv(env) || 'prod')}') AS orderLookupFailed,
-      countIf(event = 'customer_social_link_clicked' AND lower(toString(properties.env)) = '${escapedSqlString(sanitizeEnv(env) || 'prod')}') AS socialClicks
+      countIf(event = 'customer_sent_to_whatsapp' AND lower(toString(properties.env)) = '${escapedSqlString(safeEnv)}') AS whatsapp,
+      countIf(event = 'customer_order_lookup_failed' AND lower(toString(properties.env)) = '${escapedSqlString(safeEnv)}') AS orderLookupFailed,
+      countIf(event = 'customer_social_link_clicked' AND lower(toString(properties.env)) = '${escapedSqlString(safeEnv)}') AS socialClicks
     FROM events
     WHERE ${baseWhereClause}
     `,
-    'analytics_dashboard_summary',
-  );
+      'analytics_dashboard_summary',
+    );
 
-  const summary = summaryRows[0] || {};
+    const summary = summaryRows[0] || {};
 
-  const countriesRows = await runHogQL(
-    `
+    const countriesRows = await runHogQL(
+      `
     SELECT
       coalesce(nullIf(toString(properties.$geoip_country_name), ''), 'Sin datos') AS country,
       uniqExact(distinct_id) AS visitors,
@@ -368,24 +424,24 @@ export const getPosthogDashboardData = async (period: AnalyticsPeriod, env = 'pr
     ORDER BY visitors DESC
     LIMIT 10
     `,
-    'analytics_dashboard_countries',
-  );
+      'analytics_dashboard_countries',
+    );
 
-  const totalCountryVisitors = countriesRows.reduce((sum, row) => sum + toNumber(row.visitors), 0);
-  const countries = countriesRows.map((row) => {
-    const visitors = toNumber(row.visitors);
-    const share = totalCountryVisitors > 0 ? Number(((visitors / totalCountryVisitors) * 100).toFixed(1)) : 0;
+    const totalCountryVisitors = countriesRows.reduce((sum, row) => sum + toNumber(row.visitors), 0);
+    const countries = countriesRows.map((row) => {
+      const visitors = toNumber(row.visitors);
+      const share = totalCountryVisitors > 0 ? Number(((visitors / totalCountryVisitors) * 100).toFixed(1)) : 0;
 
-    return {
-      country: String(row.country),
-      visitors,
-      views: toNumber(row.views),
-      share,
-    };
-  });
+      return {
+        country: String(row.country),
+        visitors,
+        views: toNumber(row.views),
+        share,
+      };
+    });
 
-  const technologyRows = await runHogQL(
-    `
+    const technologyRows = await runHogQL(
+      `
     SELECT
       lower(coalesce(nullIf(toString(properties.$device_type), ''), 'unknown')) AS label,
       count() AS value
@@ -395,76 +451,69 @@ export const getPosthogDashboardData = async (period: AnalyticsPeriod, env = 'pr
     ORDER BY value DESC
     LIMIT 3
     `,
-    'analytics_dashboard_technology',
-  );
+      'analytics_dashboard_technology',
+    );
 
-  const totalTechnology = technologyRows.reduce((sum, row) => sum + toNumber(row.value), 0);
-  const colorByLabel: Record<string, string> = {
-    desktop: '#1677ff',
-    mobile: '#52c41a',
-    tablet: '#faad14',
-    unknown: '#8c8c8c',
-  };
-
-  const technology = technologyRows.map((row) => {
-    const rawLabel = String(row.label);
-    const value = toNumber(row.value);
-    const percent = totalTechnology > 0 ? Number(((value / totalTechnology) * 100).toFixed(1)) : 0;
-    const label =
-      rawLabel === 'desktop'
-        ? 'Desktop'
-        : rawLabel === 'mobile'
-          ? 'Mobile'
-          : rawLabel === 'tablet'
-            ? 'Tablet'
-            : 'Unknown';
-
-    return {
-      label,
-      value: percent,
-      color: colorByLabel[rawLabel] || '#8c8c8c',
+    const totalTechnology = technologyRows.reduce((sum, row) => sum + toNumber(row.value), 0);
+    const colorByLabel: Record<string, string> = {
+      desktop: '#1677ff',
+      mobile: '#52c41a',
+      tablet: '#faad14',
+      unknown: '#8c8c8c',
     };
-  });
 
-  const eventTotalsRows = await runHogQL(
-    `
+    const technology = technologyRows.map((row) => {
+      const rawLabel = String(row.label);
+      const value = toNumber(row.value);
+      const percent = totalTechnology > 0 ? Number(((value / totalTechnology) * 100).toFixed(1)) : 0;
+      const label =
+        rawLabel === 'desktop'
+          ? 'Desktop'
+          : rawLabel === 'mobile'
+            ? 'Mobile'
+            : rawLabel === 'tablet'
+              ? 'Tablet'
+              : 'Unknown';
+
+      return {
+        label,
+        value: percent,
+        color: colorByLabel[rawLabel] || '#8c8c8c',
+      };
+    });
+
+    const eventTotalsRows = await runHogQL(
+      `
     SELECT event, count() AS value
     FROM events
     WHERE ${trackedWhereClause}
     GROUP BY event
     `,
-    'analytics_dashboard_events_total',
-  );
+      'analytics_dashboard_events_total',
+    );
 
-  const events: Record<string, number> = {
-    customer_service_viewed: 0,
-    customer_result_viewed: 0,
-    customer_order_reviewed: 0,
-    customer_order_lookup_failed: 0,
-    customer_sent_to_whatsapp: 0,
-    customer_social_link_clicked: 0,
-  };
+    const events: Record<string, number> = {...EMPTY_EVENTS};
 
-  for (const row of eventTotalsRows) {
-    const eventName = String(row.event);
-    if (eventName in events) {
-      events[eventName] = toNumber(row.value);
+    for (const row of eventTotalsRows) {
+      const eventName = String(row.event);
+      if (eventName in events) {
+        events[eventName] = toNumber(row.value);
+      }
     }
-  }
 
-  const servicesByType = await queryBreakdown(trackedWhereClause, 'customer_service_viewed', 'service_type');
-  const resultsByType = await queryBreakdown(trackedWhereClause, 'customer_result_viewed', 'product_type');
-  const ordersByStatus = await queryBreakdown(trackedWhereClause, 'customer_order_reviewed', 'order_status');
-  const lookupFailuresByStatus = await queryBreakdown(
-    trackedWhereClause,
-    'customer_order_lookup_failed',
-    'error_status',
-  );
-  const whatsappBySource = await queryBreakdown(trackedWhereClause, 'customer_sent_to_whatsapp', 'source');
-  const socialByPlatform = await queryBreakdown(trackedWhereClause, 'customer_social_link_clicked', 'platform');
+    const servicesByType = await queryBreakdown(trackedWhereClause, 'customer_service_viewed', 'service_type');
+    const resultsByType = await queryBreakdown(trackedWhereClause, 'customer_result_viewed', 'product_type');
+    const ordersByStatus = await queryBreakdown(trackedWhereClause, 'customer_order_reviewed', 'order_status');
+    const lookupFailuresByStatus = await queryBreakdown(
+      trackedWhereClause,
+      'customer_order_lookup_failed',
+      'error_status',
+    );
+    const whatsappBySource = await queryBreakdown(trackedWhereClause, 'customer_sent_to_whatsapp', 'source');
+    const socialByPlatform = await queryBreakdown(trackedWhereClause, 'customer_social_link_clicked', 'platform');
 
-  const retentionRows = await runHogQL(
-    `
+    const retentionRows = await runHogQL(
+      `
     WITH user_weeks AS (
       SELECT DISTINCT distinct_id, toStartOfWeek(toDate(timestamp), 1) AS event_week
       FROM events
@@ -490,39 +539,43 @@ export const getPosthogDashboardData = async (period: AnalyticsPeriod, env = 'pr
       if(sum(cohort_size) = 0, 0, round(100.0 * sum(week1_users) / sum(cohort_size), 2)) AS week1
     FROM cohort_retention
     `,
-    'analytics_dashboard_retention',
-  );
+      'analytics_dashboard_retention',
+    );
 
-  const retention = retentionRows[0] || {};
+    const retention = retentionRows[0] || {};
 
-  const daily = await queryDailyMetrics(period, baseWhereClause);
+    const daily = await queryDailyMetrics(period, baseWhereClause);
 
-  return {
-    meta: {
-      period,
-      env: sanitizeEnv(env) || 'prod',
-    },
-    summary: {
-      visitors: toNumber(summary.visitors),
-      views: toNumber(summary.views),
-      sessions: toNumber(summary.sessions),
-      whatsapp: toNumber(summary.whatsapp),
-      orderLookupFailed: toNumber(summary.orderLookupFailed),
-      socialClicks: toNumber(summary.socialClicks),
-    },
-    daily,
-    countries,
-    retention: {
-      week0: toNumber(retention.week0),
-      week1: toNumber(retention.week1),
-    },
-    technology,
-    events,
-    servicesByType,
-    resultsByType,
-    ordersByStatus,
-    lookupFailuresByStatus,
-    whatsappBySource,
-    socialByPlatform,
-  };
+    return {
+      meta: {
+        period,
+        env: safeEnv,
+      },
+      summary: {
+        visitors: toNumber(summary.visitors),
+        views: toNumber(summary.views),
+        sessions: toNumber(summary.sessions),
+        whatsapp: toNumber(summary.whatsapp),
+        orderLookupFailed: toNumber(summary.orderLookupFailed),
+        socialClicks: toNumber(summary.socialClicks),
+      },
+      daily,
+      countries,
+      retention: {
+        week0: toNumber(retention.week0),
+        week1: toNumber(retention.week1),
+      },
+      technology,
+      events,
+      servicesByType,
+      resultsByType,
+      ordersByStatus,
+      lookupFailuresByStatus,
+      whatsappBySource,
+      socialByPlatform,
+    };
+  } catch (error) {
+    console.error('[PostHog Analytics] Fallback aplicado por error:', error);
+    return buildEmptyDashboardData(period, safeEnv);
+  }
 };

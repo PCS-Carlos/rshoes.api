@@ -7,16 +7,21 @@ export interface Config {
 }
 
 const API_ENV = process.env.NODE_ENV || 'development';
-const defaultEnvPath = path.resolve(
-  __dirname,
-  `${API_ENV === 'production' ? '../../env/.env.production' : '../../env/.env.development'}`,
-);
-const configuredEnvPath = process.env.ENV_FILE_PATH ? path.resolve(process.env.ENV_FILE_PATH) : defaultEnvPath;
+const isProduction = API_ENV === 'production';
 
-if (fs.existsSync(configuredEnvPath)) {
-  dotenv.config({path: configuredEnvPath});
+const candidateEnvPaths = [
+  ...(process.env.ENV_FILE_PATH ? [path.resolve(process.env.ENV_FILE_PATH)] : []),
+  path.resolve(__dirname, isProduction ? '../../env/.env.production' : '../../env/.env.development'),
+  path.resolve(__dirname, isProduction ? '../../.env.production' : '../../.env.development'),
+  path.resolve(__dirname, '../../.env'),
+];
+
+const existingEnvPath = candidateEnvPaths.find((filePath) => fs.existsSync(filePath));
+
+if (existingEnvPath) {
+  dotenv.config({path: existingEnvPath});
 } else {
-  // Safe fallback for deployments that inject env vars via systemd/PM2/container runtime.
+  // Final fallback for runtimes that inject env vars directly.
   dotenv.config();
 }
 
