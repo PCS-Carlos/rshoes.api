@@ -1,8 +1,17 @@
 var path = require('path');
+var fs = require('fs');
 const Dotenv = require('dotenv-webpack');
 
 module.exports = (env) => {
-  console.log(`./env/.env.${env.production ? 'production' : 'development'}`)
+  const environment = env.production ? 'production' : 'development';
+  const candidates = [
+    `./env/.env.${environment}`,
+    `./.env.${environment}`,
+    './.env',
+  ];
+  const dotenvPath = candidates.find((candidate) => fs.existsSync(path.resolve(__dirname, candidate)));
+  console.log(`dotenv path: ${dotenvPath || 'system env only'}`);
+
   return {
     entry: ['./src/index.ts'],
     output: {
@@ -23,8 +32,10 @@ module.exports = (env) => {
       __dirname: true,
     },
     plugins: [
-        new Dotenv({
-        path: `./env/.env.${env.production ? 'production' : 'development'}`
+      new Dotenv({
+        path: dotenvPath,
+        systemvars: true,
+        silent: true,
       }),
     ],
   };
