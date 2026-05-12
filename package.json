@@ -15,7 +15,7 @@
     "build": "rimraf dist && rimraf build && rimraf buildTS && webpack --mode=production --env production --progress --config webpack.config.js && zip-build",
     "build:clean": "tsc -p .",
     "build:prod": "tsc --build",
-    "dev": "concurrently -k \"tsc -p ./ -w\" \"nodemon ./buildTS/index.js\"",
+    "dev": "rimraf buildTS tsconfig.tsbuildinfo && tsc -p . && concurrently -k \"tsc -p ./ -w\" \"nodemon ./buildTS/index.js\"",
     "dev2": "nodemon -e ts  --exec \"npm run compile\"",
     "format": "prettier --config ./.prettierrc --single-quote --write '**/*.{js,jsx,ts,tsx,json,css,scss}'",
     "prepare": "husky install && yarn prisma generate && tsc"
