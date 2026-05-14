@@ -22,6 +22,8 @@ const PERIOD_DAYS: Record<AnalyticsPeriod, number> = {
   '90d': 90,
 };
 
+const WEEKDAY_LABELS = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+
 const EMPTY_EVENTS: Record<string, number> = {
   customer_service_viewed: 0,
   customer_result_viewed: 0,
@@ -213,6 +215,19 @@ const buildDailyLabels = (period: AnalyticsPeriod) => {
   return ['Mes 1', 'Mes 2', 'Mes 3'];
 };
 
+const toIsoDate = (date: Date) => {
+  const year = date.getUTCFullYear();
+  const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+  const day = String(date.getUTCDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const getWeekdayLabelFromIso = (isoDate: string) => {
+  const [year, month, day] = isoDate.split('-').map(Number);
+  const utcDate = new Date(Date.UTC(year, (month || 1) - 1, day || 1));
+  return WEEKDAY_LABELS[utcDate.getUTCDay()] || 'N/A';
+};
+
 const buildEmptyDashboardData = (period: AnalyticsPeriod, env: string) => ({
   meta: {
     period,
@@ -270,17 +285,18 @@ const queryDailyMetrics = async (period: AnalyticsPeriod, whereClause: string) =
       };
     }
 
-    const labels = buildDailyLabels(period);
     const start = new Date();
-    start.setDate(start.getDate() - 6);
+    start.setUTCHours(0, 0, 0, 0);
+    start.setUTCDate(start.getUTCDate() - 6);
 
-    return labels.map((label, index) => {
+    return Array.from({length: 7}, (_, index) => {
       const date = new Date(start);
-      date.setDate(start.getDate() + index);
-      const iso = date.toISOString().slice(0, 10);
+      date.setUTCDate(start.getUTCDate() + index);
+      const iso = toIsoDate(date);
       const item = byBucket[iso];
+
       return {
-        day: label,
+        day: getWeekdayLabelFromIso(iso),
         visitors: item ? item.visitors : 0,
         views: item ? item.views : 0,
       };
